@@ -1,7 +1,8 @@
-## Open Source Ethereum Classic Mining Pool
+## Open Source Ellaism Mining Pool
 
-![Miner's stats page](https://15254b2dcaab7f5478ab-24461f391e20b7336331d5789078af53.ssl.cf1.rackcdn.com/ethereum.vanillaforums.com/editor/pe/cf77cki0pjpt.png)
+[![Build Status](https://travis-ci.org/ellaism/open-ethereum-pool.svg?branch=master)](https://travis-ci.org/ellaism/open-ethereum-pool)
 
+Consider mining in [Dev Pool](https://pool.ellaism.org) or [donate to Dev Fund](https://ellaism.org/donate/) if you like this fork.
 
 ### Features
 
@@ -13,6 +14,7 @@
 * Modern beautiful Ember.js frontend
 * Separate stats for workers: can highlight timed-out workers so miners can perform maintenance of rigs
 * JSON-API for stats
+* PPLNS block reward
 
 #### Proxies
 
@@ -23,56 +25,20 @@
 
 Dependencies:
 
-  * go >= 1.5
-  * geth
+  * go >= 1.9
+  * geth or parity
   * redis-server >= 2.8.0
-  * nodejs
+  * nodejs >= 4 LTS
   * nginx
 
 **I highly recommend to use Ubuntu 16.04 LTS.**
-For Ubuntu 16.04 LTS blank install:
 
-    sudo apt-get update
-    sudo apt-get install build-essential
-
-GoLang
-
-    sudo curl -O https://storage.googleapis.com/golang/go1.9.1.linux-amd64.tar.gz
-    sudo tar -xvf go1.9.1.linux-amd64.tar.gz
-    sudo mv go /usr/local
-
-Install Redis Server
-   
-    sudo apt-get install redis-server
-
-NodeJS
-
-    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-    sudo apt-get install -y nodejs
-    mkdir ~/.node
-    nano ~/.npmrc
-    
-Add this line to file
-
-    prefix = ~/.node  
-
-Then open ~/.profile and add
-
-    PATH="$HOME/.node/bin:$PATH"  
-    NODE_PATH="$HOME/.node/lib/node_modules:$NODE_PATH"  
-    MANPATH="$HOME/.node/share/man:$MANPATH"      
-    export PATH=$PATH:/usr/local/go/bin
-    
-Close file and reload with 
-
-    source ~/.profile
-
-install  [go-ethereumclassic](https://github.com/ethereumproject/go-ethereum/releases).
+First install  [go-ethereum](https://github.com/ethereum/go-ethereum/wiki/Installation-Instructions-for-Ubuntu).
 
 Clone & compile:
 
-    git clone https://github.com/CoinGardenMining/open-ethereumclassic-pool.git
-    cd open-ethereumclassic-pool
+    git clone https://github.com/ellaism/open-ethereum-pool.git
+    cd open-ethereum-pool
     make
 
 Install redis-server.
@@ -81,21 +47,19 @@ Install redis-server.
 
     ./build/bin/open-ethereum-pool config.json
 
-You can use Ubuntu upstart - check for sample config in <code>upstart.conf</code>.
+You can use Ubuntu upstart - check for sample config in <code>upstart.conf</code>. See [wiki](https://github.com/ellaism/open-ethereum-pool/wiki/Running-Pool) for more ways to run the pool.
 
 ### Building Frontend
 
-Install nginx
+Install nodejs. I suggest using LTS version >= 4.x from https://github.com/nodesource/distributions or from your Linux distribution or simply install nodejs on Ubuntu Xenial 16.04.
 
-    sudo apt-get install nginx
-        
 The frontend is a single-page Ember.js application that polls the pool API to render miner stats.
 
     cd www
 
 Change <code>ApiUrl: '//example.net/'</code> in <code>www/config/environment.js</code> to match your domain name. Also don't forget to adjust other options.
 
-    npm install -g ember-cli@2.4.3
+    npm install -g ember-cli@2.9.1
     npm install -g bower
     npm install
     bower install
@@ -106,13 +70,17 @@ Configure nginx to serve <code>www/dist</code> as static website.
 
 #### Serving API using nginx
 
-Add this setting after <code>location /</code>:
+Create an upstream for API:
 
-	location /api {
-		if ($request_uri ~* "/api/(.*)") {
-			proxy_pass  http://127.0.0.1:8080/apietc/$1;
-		}
-	}
+    upstream api {
+        server 127.0.0.1:8080;
+    }
+
+and add this setting after <code>location /</code>:
+
+    location /api {
+        proxy_pass http://api;
+    }
 
 #### Customization
 
@@ -137,9 +105,11 @@ otherwise you will get errors on start because of JSON comments.**
   // Set to the number of CPU cores of your server
   "threads": 2,
   // Prefix for keys in redis store
-  "coin": "etc",
+  "coin": "eth",
   // Give unique name to each instance
   "name": "main",
+  // PPLNS rounds
+  "pplns": 9000,
 
   "proxy": {
     "enabled": true,
@@ -276,6 +246,8 @@ otherwise you will get errors on start because of JSON comments.**
     "poolFee": 1.0,
     // Pool fees beneficiary address (leave it blank to disable fee withdrawals)
     "poolFeeAddress": "",
+    // Donate 10% from pool fees to developers
+    "donate": true,
     // Unlock only if this number of blocks mined back
     "depth": 120,
     // Simply don't touch this option
@@ -338,9 +310,18 @@ I recommend this deployment strategy:
 This pool is tested to work with [Ethcore's Parity](https://github.com/ethcore/parity). Mining and block unlocking works, but I am not sure about payouts and suggest to run *official* geth node for payments.
 
 ### Credits
-Ported by LeChuckDE, Licensed under GPLv3.
+
 Made by sammy007. Licensed under GPLv3.
+Modified by The Ellaism Project.
 
 #### Contributors
 
 [Alex Leverington](https://github.com/subtly)
+
+### Donations
+
+ETH/ETC: 0xb85150eb365e7df0941f0cf08235f987ba91506a
+
+![](https://cdn.pbrd.co/images/GP5tI1D.png)
+
+Highly appreciated.

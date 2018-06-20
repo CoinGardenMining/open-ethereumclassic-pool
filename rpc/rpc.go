@@ -12,9 +12,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ethereumproject/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/LeChuckDE/open-ethereumclassic-pool/util"
+	"github.com/ellaism/open-ethereum-pool/util"
 )
 
 type RPCClient struct {
@@ -28,24 +28,15 @@ type RPCClient struct {
 }
 
 type GetBlockReply struct {
-	Number           string   `json:"number"`
-	Hash             string   `json:"hash"`
-	ParentHash       string   `json:"parentHash"`
-	Nonce            string   `json:"nonce"`
-	Sha3Uncles       string   `json:"sha3Uncles"`
-	LogsBloom        string   `json:"logsBloom"`
-	TransactionsRoot string   `json:"transactionsRoot"`
-	StateRoot        string   `json:"stateRoot"`
-	Miner            string   `json:"miner"`
-	Difficulty       string   `json:"difficulty"`
-	TotalDifficulty  string   `json:"totalDifficulty"`
-	Size             string   `json:"size"`
-	ExtraData        string   `json:"extraData"`
-	GasLimit         string   `json:"gasLimit"`
-	GasUsed          string   `json:"gasUsed"`
-	Timestamp        string   `json:"timestamp"`
-	Transactions     []Tx     `json:"transactions"`
-	Uncles           []string `json:"uncles"`
+	Number       string   `json:"number"`
+	Hash         string   `json:"hash"`
+	Nonce        string   `json:"nonce"`
+	Miner        string   `json:"miner"`
+	Difficulty   string   `json:"difficulty"`
+	GasLimit     string   `json:"gasLimit"`
+	GasUsed      string   `json:"gasUsed"`
+	Transactions []Tx     `json:"transactions"`
+	Uncles       []string `json:"uncles"`
 	// https://github.com/ethereum/EIPs/issues/95
 	SealFields []string `json:"sealFields"`
 }
@@ -55,9 +46,25 @@ type GetBlockReplyPart struct {
 	Difficulty string `json:"difficulty"`
 }
 
+const receiptStatusSuccessful = "0x1"
+
 type TxReceipt struct {
-	TxHash  string `json:"transactionHash"`
-	GasUsed string `json:"gasUsed"`
+	TxHash    string `json:"transactionHash"`
+	GasUsed   string `json:"gasUsed"`
+	BlockHash string `json:"blockHash"`
+	Status    string `json:"status"`
+}
+
+func (r *TxReceipt) Confirmed() bool {
+	return len(r.BlockHash) > 0
+}
+
+// Use with previous method
+func (r *TxReceipt) Successful() bool {
+	if len(r.Status) > 0 {
+		return r.Status == receiptStatusSuccessful
+	}
+	return true
 }
 
 type Tx struct {
@@ -165,13 +172,7 @@ func (r *RPCClient) GetBalance(address string) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	balance, ok := new(big.Int).SetString(reply, 0)
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("malformed balance: %d", reply));
-	}
-
-	return balance, err
+	return util.String2Big(reply), err
 }
 
 func (r *RPCClient) Sign(from string, s string) (string, error) {
@@ -182,6 +183,12 @@ func (r *RPCClient) Sign(from string, s string) (string, error) {
 		return reply, err
 	}
 	err = json.Unmarshal(*rpcResp.Result, &reply)
+	if err != nil {
+		return reply, err
+	}
+	if util.IsZeroHash(reply) {
+		err = errors.New("Can't sign message, perhaps account is locked")
+	}
 	return reply, err
 }
 
