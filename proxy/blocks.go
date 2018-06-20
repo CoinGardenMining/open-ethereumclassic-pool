@@ -99,7 +99,6 @@ func (s *ProxyServer) fetchBlockTemplate() {
 func (s *ProxyServer) fetchPendingBlock() (*rpc.GetBlockReplyPart, uint64, int64, error) {
 	rpc := s.rpc()
 	reply, err := rpc.GetPendingBlock()
-	log.Printf("fetsch__  %s: %s",reply, err)
 	if err != nil {
 		log.Printf("Error while refreshing pending block on %s: %s", rpc.Name, err)
 		return nil, 0, 0, err
