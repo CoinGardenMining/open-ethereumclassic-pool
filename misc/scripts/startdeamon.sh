@@ -1,0 +1,1 @@
+parity --no-ui --author="0x0000000000000000000000000000000000000000" --unlock="0x0000000000000000000000000000000000000000" --password="/home/ubuntu/ellapass" --max-peers=500 --extra-data="ella.miner" --identity="ella.miner" --cache=128 --chain ellaism --jsonrpc-apis eth,net,web3,personal
